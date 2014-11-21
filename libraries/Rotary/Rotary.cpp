@@ -61,7 +61,7 @@
  */
 
 #include "Arduino.h"
-#include "rotary.h"
+#include "Rotary.h"
 
 /*
  * The below state table has, for each state (row), the new state
