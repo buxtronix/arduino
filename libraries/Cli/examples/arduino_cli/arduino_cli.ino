@@ -5,6 +5,10 @@
  * is via this.
  */
 #include <Cli.h>
+#include <stdio.h>
+
+// Setup for being able to use "printf".
+static FILE uartout = {0};
 
 // Initialise the Cli with the given prompt.
 const char *prompt = "arduino> ";
@@ -29,7 +33,17 @@ Command commands[7] = {
 // Number of commands above.
 char ncommands = 7;
 
+// putchar method for "printf" (http://playground.arduino.cc/Main/Printf)
+static int uart_putchar(char c, FILE *stream) {
+  Serial.write(c);
+  return 0;
+}
+
 void setup() {
+  // Setup for printf to work.
+  fdev_setup_stream(&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
+  stdout = &uartout;
+  
   // Initialise the serial port.
   Serial.begin(57600);
   // Initialise the Cli module with the commands defined above.
@@ -49,8 +63,7 @@ void loop() {
 
 // Handler for the "millis" command.
 void millis_func() {
-  Serial.print("Millis: ");
-  Serial.println(millis());
+  printf("Millis: %ld\r\n", millis());
 }
 
 // Handler for the "reset" command.
@@ -64,9 +77,7 @@ void reset_func() {
 // Delay function.
 void delay_func() {
   int value = cli->getArgi(1);
-  Serial.print("Sleeping for ");
-  Serial.print(value);
-  Serial.println(" millis...");
+  printf("Sleeping for %d millis...\r\n", value);
   delay(value);
 }
 
@@ -76,20 +87,14 @@ void write_func() {
   char value = cli->getArgi(2);
   pinMode(pin, OUTPUT);
   digitalWrite(pin, value);
-  Serial.print("Wrote ");
-  Serial.print((int)value);
-  Serial.print(" to pin ");
-  Serial.println((int)pin);
+  printf("Wrote %d to pin %d\r\n", value, pin);
 }
 
 // Pin read function.
 void read_func() {
   char pin = cli->getArgi(1);
-  Serial.print("Value on pin ");
-  Serial.print((int)pin);
-  Serial.print(": ");
   pinMode(pin, INPUT);
-  Serial.println(digitalRead(pin));
+  printf("Value on pin %d: %d\r\n", pin, digitalRead(pin));
 }
 
 // Analog write function.
@@ -98,17 +103,11 @@ void awrite_func() {
   int value = cli->getArgi(2);
   pinMode(pin, OUTPUT);
   analogWrite(pin, value);
-  Serial.print("Wrote pwm ");
-  Serial.print((int)value);
-  Serial.print(" to pin ");
-  Serial.println((int)pin);
+  printf("Write PWM %d to pin %d\r\n", value, pin);
 }
 
 // Analog read function.
 void aread_func() {
   char pin = cli->getArgi(1);
-  Serial.print("Value on pin ");
-  Serial.print((int)pin);
-  Serial.print(": ");
-  Serial.println(analogRead(pin));
+  printf("Value on pin %d: %d\r\n", pin, analogRead(pin));
 }
