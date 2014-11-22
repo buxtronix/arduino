@@ -17,16 +17,17 @@ Cli *cli;
  * 3. Minimum number of arguments required.
  * 4. A pointer to the function called when the command is entered.
  */
-Command commands[6] = {
-  {"delay", "Sleep for given number of seconds", 1, &delay_func},
-  {"millis", "Show Arduino millis() value.", 0, &millis_func},
+Command commands[7] = {
+  {"dl", "Sleep for given number of seconds", 1, &delay_func},
+  {"ms", "Show Arduino millis() value.", 0, &millis_func},
   {"reset", "Reset the Arduino.", 0, &reset_func},
-  {"write", "Write a value to a digital pin. [pin] [0|1]", 2, &write_func},
-  {"awrite", "Write a value to an analog pin. [pin] [0-255]", 2, &awrite_func},
-  {"aread", "Read analogue value from a pin.", 1, &aread_func},
+  {"dw", "Write a value to a digital pin. [pin] [0|1]", 2, &write_func},
+  {"dr", "Read digital value from a pin.", 1, &read_func},
+  {"aw", "Write a value to an analog pin. [pin] [0-255]", 2, &awrite_func},
+  {"ar", "Read analogue value from a pin.", 1, &aread_func},
 };
 // Number of commands above.
-char ncommands = 6;
+char ncommands = 7;
 
 void setup() {
   // Initialise the serial port.
@@ -79,6 +80,16 @@ void write_func() {
   Serial.print((int)value);
   Serial.print(" to pin ");
   Serial.println((int)pin);
+}
+
+// Pin read function.
+void read_func() {
+  char pin = cli->getArgi(1);
+  Serial.print("Value on pin ");
+  Serial.print((int)pin);
+  Serial.print(": ");
+  pinMode(pin, INPUT);
+  Serial.println(digitalRead(pin));
 }
 
 // Analog write function.
