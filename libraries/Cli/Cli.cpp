@@ -1,7 +1,7 @@
 /* Cli library for Arduino */
 
 #include "Arduino.h"
-#include "cli.h"
+#include "Cli.h"
 #include <string.h>
 
 
@@ -25,7 +25,7 @@ void Cli::addChar(char c) {
     _parseAndRun();
     return;
   }
-  if (c == 0x8) {
+  if (c == 0x8 || c == 0x7F) {
     if (_cliBufferLength > 0) {
       _cliBuffer[--_cliBufferLength] = '\0';
       printfunc->print("\010 \010");
@@ -59,8 +59,8 @@ unsigned char len = 0;
   return len;
 }
 
-char Cli::atoi(char *s) {
-  char value = 0;
+int Cli::atoi(char *s) {
+  int value = 0;
   int mult = 1;  
   char *end = &s[_strlen(s)];
   while (end != s) {
@@ -105,7 +105,14 @@ char *ptr;
   return _argBuffer;
 }
 
-void Cli::_help() {
+// Returns the nth arg on the command line parsed as an int (0 is the command).
+int Cli::getArgi(char n) {
+  char *arg = getArg(n);
+  return atoi(arg);
+}
+
+// Displays help - all of the available commands.
+void Cli::help() {
     printfunc->println("Command help:");
     for (unsigned char i = 0 ; i < ncommands ; i++) {
       printfunc->write(' ');
@@ -126,7 +133,7 @@ unsigned char i;
     return;
   }
   if (_strlen(_cliBuffer) == 1 && _strncmp("?", _cliBuffer, 1)) {
-    _help();
+    help();
     return;
   }
 
@@ -139,7 +146,7 @@ unsigned char i;
     Command c = commands[i];
     if (_strlen(_commandBuffer) == _strlen(c.name) &&
         _strncmp(_commandBuffer, c.name, _strlen(c.name))) {
-      c.run();
+      runFunc(c);
       _clear();
       printfunc->print(prompt);
       return;
@@ -149,4 +156,17 @@ unsigned char i;
   _clear();
   printfunc->println("Unknown command. '?' for help.");
   printfunc->print(prompt);
+}
+
+// Runs the command, if the number of args matches.
+void Cli::runFunc(Command c) {
+  if (c.args > 0 && getArg(c.args)[0] == '\0') {
+    printfunc->print("Command '");
+    printfunc->print(c.name);
+    printfunc->print("' requires ");
+    printfunc->print((int)c.args);
+    printfunc->println(" arguments.");
+    return;
+  }
+  c.run();
 }

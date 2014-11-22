@@ -24,6 +24,8 @@ struct Command {
   const char *name;
   // Help text associated with the command.
   const char *help;
+  // Number of arguments required after the command.
+  const char args;
   // The function to run when the command is run.
   CommandProc run;
 };
@@ -40,10 +42,14 @@ class Cli
     void addChar(char c);
     /* Used by the command's function to get the command argument at position n */
     char *getArg(char n);
+    /* Similar to above, but parses the arg as an integer. */
+    int getArgi(char n);
     /* Fetch a pointer to the start of the command's arguments. */
     char *getArg();
-    /* Converts the given string to a signed char. */
-    char atoi(char *);
+    /* Converts the given string to a signed int. */
+    int atoi(char *);
+    // Display help.
+    void help(void);
     /* The printable function */
     Print *printfunc;
     /* The valid commands in this cli. */
@@ -70,8 +76,8 @@ class Cli
     char _strncmp(const char *, const char *, char);
     // When enter is pressed, run the command.
     void _parseAndRun();
-    // Display help.
-    void _help(void);
+    // Run the function that was found.
+    void runFunc(Command);
 };
 
 #endif
