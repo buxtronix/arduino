@@ -16,6 +16,7 @@ const char MAIN_page[] PROGMEM = R"=====(
 <tr><td colspan=2 class=heading>Status</td></tr>
 <tr><td>Current time:</td><td><b>@@HOUR@@:@@MIN@@</b></td></tr>
 <tr><td>Sync Status:</td><td>@@SYNCSTATUS@@</td></tr>
+<tr><td>Name:</td><td><input type=text name="clockname" value="@@CLOCKNAME@@"></td></tr>
 
 <tr><td colspan=2 class=heading>WiFi Setup</td></tr>
 <tr><td>SSID:</td><td><input type=text name="ssid" value="@@SSID@@"></td></tr>

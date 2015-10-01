@@ -56,9 +56,8 @@ void setupTime() {
 
 time_t getNtpTime()
 {
-  time_t recvTime = 0;
   while (udp.parsePacket() > 0) ; // discard any previously received packets
-  for (int i = 0 ; i < 5 && recvTime == 0 ; i++) { // 5 retries.
+  for (int i = 0 ; i < 5 ; i++) { // 5 retries.
     sendNTPpacket(timeServer);
     uint32_t beginWait = millis();
     while (millis() - beginWait < 1500) {
@@ -68,14 +67,13 @@ time_t getNtpTime()
          unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
          unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
          unsigned long secSince1900 = highWord << 16 | lowWord;
-         recvTime = secSince1900 - 2208988800UL + timezone * SECS_PER_HOUR;
-         break;
+         udp.flush();
+         return secSince1900 - 2208988800UL + timezone * SECS_PER_HOUR;
       }
-      yield();
+      delay(10);
     }
   }
-  timeRet:
-  return recvTime; // return 0 if unable to get the time
+  return 0; // return 0 if unable to get the time
 }
 
 

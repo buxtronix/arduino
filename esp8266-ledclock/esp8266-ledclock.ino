@@ -8,7 +8,6 @@
 #include <WiFiServer.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
 
 #include "mainPage.h"
 
@@ -23,8 +22,8 @@ int clockMode;
 time_t syncInterval = 3600;
 
 ESP8266WebServer server (80);
-MDNSResponder mdns;
 
+String clockName = "";
 String w_ssid;
 String w_psk;
 long timezone;
@@ -41,6 +40,7 @@ void handleRoot() {
   s.replace("@@NTPSRV@@", ipToString(timeServer));
   s.replace("@@NTPINT@@", String(syncInterval));
   s.replace("@@SYNCSTATUS@@", timeStatus() == timeSet ? "OK" : "Overdue");
+  s.replace("@@CLOCKNAME@@", clockName);
   server.send(200, "text/html", s);
 }
 
@@ -69,6 +69,9 @@ void handleForm() {
   syncInterval = syncInt.toInt();
   response += "The NTP sync interval is: " + syncInt + "s\r\n";
 
+  clockName = server.arg("clockname");
+  response += "Clock name is: " + clockName;
+
   server.send(200, "text/plain", response);
   saveSettings();
   if (update_wifi == "1") {
@@ -86,14 +89,12 @@ void setup() {
   server.on("/", handleRoot);
   server.on("/form", handleForm);
   server.begin();
-  mdns.begin(CLOCK_NAME, WiFi.localIP());
 }
 
 void loop() {
   server.handleClient();
   if (displayIP()) return;
   if (clockMode == MODE_CLOCK) {
-    mdns.update();
     if (timeStatus() != timeNotSet) {
       if (now() != prevDisplay) { //update the display only if time has changed
         prevDisplay = now();
@@ -131,6 +132,8 @@ void setupWiFi() {
 #define EEPROM_TIMESERVER_LENGTH 4
 #define EEPROM_INTERVAL_OFFSET EEPROM_TIMESERVER_OFFSET + EEPROM_TIMESERVER_LENGTH
 #define EEPROM_INTERVAL_LENGTH 2
+#define EEPROM_NAME_OFFSET EEPROM_INTERVAL_OFFSET + EEPROM_INTERVAL_LENGTH
+#define EEPROM_NAME_LENGTH 32
 
 void readSettings() {
   EEPROM.begin(EEPROM_WIFI_SIZE);
@@ -166,6 +169,15 @@ void readSettings() {
   syncInterval;
   syncInterval = time_t(EEPROM.read(EEPROM_INTERVAL_OFFSET)) << 8;
   syncInterval |= EEPROM.read(EEPROM_INTERVAL_OFFSET+1);
+
+  clockName = "";
+  for (int i = 0 ; i < EEPROM_NAME_LENGTH ; i++) {
+    char c = EEPROM.read(EEPROM_NAME_OFFSET + i);
+    if (c) {
+      clockName += c;
+    }
+  }
+  clockName.replace("+", " ");
   EEPROM.end();
 }
 
@@ -197,6 +209,10 @@ void saveSettings() {
   // Write the interval.
   EEPROM.write(EEPROM_INTERVAL_OFFSET, (syncInterval >> 8) & 0xff);
   EEPROM.write(EEPROM_INTERVAL_OFFSET+1, syncInterval & 0xff);
+  // Write the clock name.
+  for (int i = 0 ; i < clockName.length() ; i++) {
+    EEPROM.write(EEPROM_NAME_OFFSET + i, clockName.charAt(i));
+  }
   EEPROM.end();
 }
 
