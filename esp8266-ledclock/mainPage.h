@@ -7,10 +7,14 @@ const char MAIN_page[] PROGMEM = R"=====(
  body {font-family: helvetica,arial,sans-serif;}
  table {border-collapse: collapse; border: 1px solid black;}
  td {padding: 0.25em;}
+ .title { font-size: 2em; font-weight: bold;}
+ .name {padding: 0.5em;}
  .heading {font-weight: bold; background: #c0c0c0; padding: 0.5em;}
+ .update {color: #dd3333; font-size: 0.75em;}
  </style>
 </head>
-<h1>NTP Clock</h1>
+<div class=title>NTP Clock</div>
+<div class=name>Location: @@CLOCKNAME@@</div>
 <form method="post" action="/form">
 <table>
 <tr><td colspan=2 class=heading>Status</td></tr>
@@ -31,7 +35,7 @@ const char MAIN_page[] PROGMEM = R"=====(
 <p/>
 <input type="submit" value="Update">
 </form>
-
+<div class="update">@@UPDATERESPONSE@@</div>
 </html>
 )=====";
 

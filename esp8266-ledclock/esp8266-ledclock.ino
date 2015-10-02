@@ -26,6 +26,7 @@ ESP8266WebServer server (80);
 String clockName = "";
 String w_ssid;
 String w_psk;
+String httpUpdateResponse;
 long timezone;
 IPAddress timeServer(129, 6, 15, 28);
 time_t prevDisplay = 0;
@@ -41,38 +42,38 @@ void handleRoot() {
   s.replace("@@NTPINT@@", String(syncInterval));
   s.replace("@@SYNCSTATUS@@", timeStatus() == timeSet ? "OK" : "Overdue");
   s.replace("@@CLOCKNAME@@", clockName);
+  s.replace("@@UPDATERESPONSE@@", httpUpdateResponse);
+  httpUpdateResponse = "";
   server.send(200, "text/html", s);
 }
 
 void handleForm() {
-  String response = "The following was changed:\r\n\r\n";
   String update_wifi = server.arg("update_wifi");
   String t_ssid = server.arg("ssid");
   String t_psk = server.arg("psk");
   timeServer = parseIP(server.arg("ntpsrv"));
   if (update_wifi == "1") {
-    response += "Wifi SSID set to: " + t_ssid + "\r\n";
-    response += "Wifi PSK set to : " + t_psk + "\r\n";
     w_ssid = t_ssid;
     w_psk = t_psk;
   }
   String tz = server.arg("timezone");
 
   if (tz.length()) {
-    response += "The timezone set to: " + tz + "h\r\n";
     timezone = tz.toInt();
   }
-  response += "The NTP server is set to: " + ipToString(timeServer) + "\r\n";
   setTime(getNtpTime());
 
   String syncInt = server.arg("ntpint");
   syncInterval = syncInt.toInt();
-  response += "The NTP sync interval is: " + syncInt + "s\r\n";
 
   clockName = server.arg("clockname");
-  response += "Clock name is: " + clockName;
 
-  server.send(200, "text/plain", response);
+  httpUpdateResponse = "The configuration was updated.";
+
+  //server.send(200, "text/plain", response);
+  server.sendHeader("Location", "/");
+  server.send(302, "text/plain", "Moved");
+  //handleRoot();
   saveSettings();
   if (update_wifi == "1") {
     delay(500);
