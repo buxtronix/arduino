@@ -1,5 +1,5 @@
 
-unsigned int localPort = 2390;
+unsigned int localPort = 4097;
 const int NTP_PACKET_SIZE = 48;
 byte packetBuffer[NTP_PACKET_SIZE];
 byte sendBuffer[] = {
@@ -8,7 +8,6 @@ byte sendBuffer[] = {
   0x6,                 // Polling interval
   0xEC,                // Clock precision.
   0x0, 0x0, 0x0, 0x0}; // Reference ...
-WiFiUDP udp;
 
 String ipToString(IPAddress ip) {
   uint32_t addr = ip;
@@ -49,16 +48,17 @@ IPAddress parseIP(String ipaddr) {
 }
 
 void setupTime() {
-  udp.begin(localPort);
   setSyncProvider(getNtpTime);
   setSyncInterval(syncInterval);
 }
 
 time_t getNtpTime()
 {
+  WiFiUDP udp;
+  udp.begin(localPort);
   while (udp.parsePacket() > 0) ; // discard any previously received packets
   for (int i = 0 ; i < 5 ; i++) { // 5 retries.
-    sendNTPpacket(timeServer);
+    sendNTPpacket(&udp, timeServer);
     uint32_t beginWait = millis();
     while (millis() - beginWait < 1500) {
       if (udp.parsePacket()) {
@@ -77,12 +77,12 @@ time_t getNtpTime()
 }
 
 
-void sendNTPpacket(IPAddress &address) {
+void sendNTPpacket(WiFiUDP *u, IPAddress &address) {
   // Zeroise the buffer.
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   memcpy(packetBuffer, sendBuffer, 16);
 
-  udp.beginPacket(address, 123);  // Port 123.
-  udp.write(packetBuffer, NTP_PACKET_SIZE);
-  udp.endPacket();
+  u->beginPacket(address, 123);  // Port 123.
+  u->write(packetBuffer, NTP_PACKET_SIZE);
+  u->endPacket();
 }
