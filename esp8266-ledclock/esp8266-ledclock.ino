@@ -61,19 +61,20 @@ void handleForm() {
   if (tz.length()) {
     timezone = tz.toInt();
   }
-  setTime(getNtpTime());
-
+  
+  time_t newTime = getNtpTime();
+  if (newTime) {
+    setTime(newTime);
+  }
   String syncInt = server.arg("ntpint");
   syncInterval = syncInt.toInt();
 
   clockName = server.arg("clockname");
-
   httpUpdateResponse = "The configuration was updated.";
 
-  //server.send(200, "text/plain", response);
   server.sendHeader("Location", "/");
   server.send(302, "text/plain", "Moved");
-  //handleRoot();
+
   saveSettings();
   if (update_wifi == "1") {
     delay(500);

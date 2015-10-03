@@ -12,7 +12,6 @@ byte sendBuffer[] = {
 String ipToString(IPAddress ip) {
   uint32_t addr = ip;
   String ret;
-  //ret = String(addr >> 24) + "." + String(addr >> 16 & 0xff) + "." + String(addr >> 8 & 0xff) + "." + String(addr & 0xff);
   ret = String(addr & 0xff) + "." + String(addr >> 8 & 0xff) + "." + String(addr >> 16 & 0xff) + "." + String(addr >> 24);
   return ret;
 }
