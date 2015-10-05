@@ -22,6 +22,8 @@ The particular LED module I'm using is a Sure Electronics
 display. It runs off 5v, however the driver chips are 3.3v
 input compatible, obviating the need for a level converter.
 
+![LED Clock Diagram] (https://raw.githubusercontent.com/buxtronix/arduino/master/esp8266-ledclock/esp8266-clock.png)
+
 ## Operation ##
 
 The clock has a simple interface, and does not require any software
