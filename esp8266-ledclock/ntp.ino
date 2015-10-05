@@ -9,46 +9,9 @@ byte sendBuffer[] = {
   0xEC,                // Clock precision.
   0x0, 0x0, 0x0, 0x0}; // Reference ...
 
-String ipToString(IPAddress ip) {
-  uint32_t addr = ip;
-  String ret;
-  ret = String(addr & 0xff) + "." + String(addr >> 8 & 0xff) + "." + String(addr >> 16 & 0xff) + "." + String(addr >> 24);
-  return ret;
-}
-
-IPAddress parseIP(String ipaddr) {
- // charArray of ipaddr.
- char ip[16];
- uint32_t address = 0;
- int o = 0;
- char octet[3];
- char digits = 0; // per octet.
- if (ipaddr.length() > 16) goto badIP;
- ipaddr.toCharArray(ip, 16);
- for (int i = 0 ; ip[i] != '\0' ; i++) {
-   if (ip[i] == '.') {
-     uint8_t oct = atoi(octet);
-     if (digits < 1 || digits > 3 || oct > 0xff) {
-       goto badIP;
-     }
-     address |= oct << (8 * o);
-     if (o++ > 2) goto badIP;
-     memset(octet, 0, 4); digits = 0;
-   } else if (ip[i] < '0' || ip[i] > '9' || digits > 2) {
-    goto badIP;
-   } else {
-     octet[digits++] = ip[i];
-   }
- }
- address |= atoi(octet) << 24;
- return IPAddress(address);
- badIP:
- return IPAddress(0, 0, 0, 0);
-}
-
 void setupTime() {
   setSyncProvider(getNtpTime);
-  setSyncInterval(syncInterval);
+  setSyncInterval(settings.interval);
 }
 
 time_t getNtpTime()
@@ -57,7 +20,7 @@ time_t getNtpTime()
   udp.begin(localPort);
   while (udp.parsePacket() > 0) ; // discard any previously received packets
   for (int i = 0 ; i < 5 ; i++) { // 5 retries.
-    sendNTPpacket(&udp, timeServer);
+    sendNTPpacket(&udp);
     uint32_t beginWait = millis();
     while (millis() - beginWait < 1500) {
       if (udp.parsePacket()) {
@@ -67,7 +30,7 @@ time_t getNtpTime()
          unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
          unsigned long secSince1900 = highWord << 16 | lowWord;
          udp.flush();
-         return secSince1900 - 2208988800UL + timezone * SECS_PER_HOUR;
+         return secSince1900 - 2208988800UL + settings.timezone * SECS_PER_HOUR;
       }
       delay(10);
     }
@@ -75,13 +38,13 @@ time_t getNtpTime()
   return 0; // return 0 if unable to get the time
 }
 
-
-void sendNTPpacket(WiFiUDP *u, IPAddress &address) {
+void sendNTPpacket(WiFiUDP *u) {
   // Zeroise the buffer.
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   memcpy(packetBuffer, sendBuffer, 16);
 
-  u->beginPacket(address, 123);  // Port 123.
-  u->write(packetBuffer, NTP_PACKET_SIZE);
-  u->endPacket();
+  if (u->beginPacket(settings.timeserver, 123)) {
+    u->write(packetBuffer, NTP_PACKET_SIZE);
+    u->endPacket();
+  }
 }
